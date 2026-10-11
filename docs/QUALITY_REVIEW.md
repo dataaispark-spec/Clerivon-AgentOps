@@ -4,7 +4,7 @@
 The initial `main` version of the six-vertical AgentOps scaffold, including FastAPI routes, workflow handlers, action approval/execution, in-memory store, tests and CI.
 
 ## Findings fixed in this change
-- **CI lint failure (resolved):** Ruff flagged UTC aliases and import ordering. The fixes are merged into `main`; the current main CI run passed lint and tests.
+- **CI lint failure (resolved):** Ruff flagged UTC aliases, import ordering and validation exception style. The fixes are merged into `main`; current main CI has passed lint and tests.
 - **Idempotency collision:** a tenant could reuse an already-used idempotency key against a different proposal and receive the previous proposal's result. Execution now rejects that collision.
 - **Approval expiry:** an expired proposal could previously be approved and only fail later at execution. Approval now rejects it and transitions it to `expired`.
 - **Audit event ID concurrency:** the previous sequence derived from list length before taking the lock. Sequence allocation and append now happen under the same lock.
@@ -12,8 +12,10 @@ The initial `main` version of the six-vertical AgentOps scaffold, including Fast
 - **Test isolation and coverage:** tests reset mutable process-local state and now cover expired approval and idempotency-key collision.
 
 ## Latest verification (2026-10-11)
-- Merged commit: `6cac33444044efab9f2c9769f6f20084313f137b`.
-- GitHub Actions on `main`: success for dependency installation, Ruff linting and pytest. [Run details](https://github.com/dataaispark-spec/Clerivon-AgentOps/actions/runs/38144796557).
+- Approval/idempotency hardening merged in `6cac33444044efab9f2c9769f6f20084313f137b`.
+- Six-vertical deterministic demo workflows merged in `8ba807b38eccbcf91fda377c3420c13a53aa400a`.
+- GitHub Actions on `main`: success for dependency installation, Ruff linting and pytest, including the six-vertical regression tests. [Latest run details](https://github.com/dataaispark-spec/Clerivon-AgentOps/actions/runs/38147022750).
+- [Implementation matrix](IMPLEMENTATION_MATRIX.md) and [demo runbook](DEMO_RUNBOOK.md) now describe executable behavior versus remaining gaps.
 - Production-readiness work is tracked in [issue #3](https://github.com/dataaispark-spec/Clerivon-AgentOps/issues/3).
 
 ## Important residual limitations
