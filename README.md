@@ -3,12 +3,12 @@
 Governed multi-agent workflow reference platform across six enterprise verticals. This is an MVP scaffold using synthetic data and mock execution only; it is not production-certified.
 
 ## Solution packs
-- **BFSI — KYC & AML Investigation Copilot:** document extraction, record reconciliation, risk triage, evidence verification, analyst review.
-- **Retail — Inventory & Demand Orchestration:** demand analysis, stock reconciliation, replenishment recommendations, verified inventory updates.
-- **Logistics — Shipment Exception Resolution:** stale tracking detection, SLA validation, carrier coordination, approved action execution.
-- **Healthcare — Prior Authorization Assistant:** clinical document intake, guideline retrieval, coding assistance, authorization packet preparation.
-- **Marketing — Creative Intelligence & Optimization:** creative analysis, strategy agents, brand compliance, campaign experiments, performance evaluation.
-- **MSME — AI Digital Workforce:** lead qualification, invoice assistance, sales follow-ups, operations coordination, owner reporting.
+- **BFSI — KYC & AML Investigation Copilot:** synthetic record-mismatch and watchlist-signal triage with an analyst checklist (document extraction and entity resolution remain future work).
+- **Retail — Inventory & Demand Orchestration:** rule-based stock/replenishment gap calculation (statistical forecasting and inventory write verification remain future work).
+- **Logistics — Shipment Exception Resolution:** stale-tracking detection and ETA-unconfirmed behavior; SLA calculation and carrier adapters remain future work.
+- **Healthcare — Prior Authorization Assistant:** synthetic document-completeness checklist and draft-only packet state (no live clinical data or guideline retrieval).
+- **Marketing — Creative Intelligence & Optimization:** synthetic required/forbidden claim string checks and experiment brief (not legal approval or live performance optimization).
+- **MSME — AI Digital Workforce:** simple lead-score threshold, invoice-field completeness and opted-out contact dispatch block (no CRM/accounting connectors).
 
 ## Safety invariants
 1. Evidence and observation timestamps are explicit; retrieval time is not source-observation time.
@@ -62,4 +62,4 @@ The target repository is `https://github.com/dataaispark-spec/Clerivon-AgentOps`
 
 ## Engineering quality and production status
 
-The current `main` CI run is green for dependency installation, Ruff linting and pytest. See [the quality review](docs/QUALITY_REVIEW.md) and [production-readiness backlog](https://github.com/dataaispark-spec/Clerivon-AgentOps/issues/3). A green demo test suite does **not** mean production approval: authentication/authorization, PostgreSQL tenant isolation, durable audit, real agent graphs and guarded integration adapters remain unfinished.
+The current `main` CI run is green for dependency installation, Ruff linting and pytest, including regression tests for each vertical's deterministic synthetic workflow. See [the implementation matrix](docs/IMPLEMENTATION_MATRIX.md) for a precise status by capability. These are not live integrations or autonomous LLM agents. See [the quality review](docs/QUALITY_REVIEW.md) and [production-readiness backlog](https://github.com/dataaispark-spec/Clerivon-AgentOps/issues/3). A green demo test suite does **not** mean production approval: authentication/authorization, PostgreSQL tenant isolation, durable audit, real agent graphs and guarded integration adapters remain unfinished.
