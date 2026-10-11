@@ -159,7 +159,7 @@ def run(vertical: str, tenant_id: str, case_id: str | None, inputs: dict[str, An
         creative_claims = inputs.get("creative_claims", [])
         for name, value in (("required_claims", required_claims), ("forbidden_claims", forbidden_claims), ("creative_claims", creative_claims)):
             if not isinstance(value, list):
-                raise ValueError(f"{name} must be a list")
+                raise TypeError(f"{name} must be a list")
         creative_set = {str(x).strip().casefold() for x in creative_claims}
         required_set = {str(x).strip().casefold() for x in required_claims}
         forbidden_set = {str(x).strip().casefold() for x in forbidden_claims}
