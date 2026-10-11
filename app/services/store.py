@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from threading import RLock
 from typing import Any
 
@@ -23,7 +23,7 @@ shipments = {
 
 def event(tenant_id: str, event_type: str, actor: str, details: dict[str, Any]) -> dict[str, Any]:
     # Sequence allocation and append use the same lock to avoid duplicate audit IDs
-    # under concurrent requests. This in-memory log is not durable or tamper-evident.
+    # under concurrent requests. The in-memory log is not durable or tamper-evident.
     global _audit_sequence
     with lock:
         _audit_sequence += 1
