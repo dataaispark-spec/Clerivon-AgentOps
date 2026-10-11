@@ -59,3 +59,7 @@ Execution is mock-only.
 PostgreSQL tenant RLS and transactions; OIDC/SSO and RBAC/ABAC; verified approver identity; durable/tamper-evident audit; prompt-injection and PII/PHI controls; least-privilege allow-listed integrations; model gateway and evaluation sets; security, recovery, load and domain-specific reviews. The in-memory demo is not production-ready.
 
 The target repository is `https://github.com/dataaispark-spec/Clerivon-AgentOps`. Never commit tokens or local `.env` files.
+
+## Engineering quality and production status
+
+The current `main` CI run is green for dependency installation, Ruff linting and pytest. See [the quality review](docs/QUALITY_REVIEW.md) and [production-readiness backlog](https://github.com/dataaispark-spec/Clerivon-AgentOps/issues/3). A green demo test suite does **not** mean production approval: authentication/authorization, PostgreSQL tenant isolation, durable audit, real agent graphs and guarded integration adapters remain unfinished.
