@@ -210,7 +210,7 @@ def run(vertical: str, tenant_id: str, case_id: str | None, inputs: dict[str, An
         flags.append("no_autonomous_payment_tax_filing_or_binding_quote")
         summary = "Synthetic MSME lead and invoice assistance prepared; outbound communication remains a draft pending owner review."
     else:
-        raise ValueError(f"Unsupported vertical: {vertical}")
+        raise TypeError(f"Unsupported vertical: {vertical}")
 
     result = WorkflowResult(
         tenant_id=tenant_id,
