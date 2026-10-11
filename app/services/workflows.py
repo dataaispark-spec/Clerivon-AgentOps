@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.config import settings
@@ -19,8 +19,14 @@ def run(vertical: str, tenant_id: str, case_id: str | None, inputs: dict[str, An
 
     if vertical == "logistics":
         shipment_id = str(inputs.get("shipment_id") or case_id or "SHP-10482")
-        shipment = store.shipments.get(shipment_id)
-        if not shipment or shipment["tenant_id"] != tenant_id:
+        with store.lock:
+            shipment = store.shipments.get(shipment_id)
+            # Copy while locked: the shared in-memory repository is mutable.
+            if not shipment or shipment["tenant_id"] != tenant_id:
+                shipment = None
+            else:
+                shipment = dict(shipment)
+        if shipment is None:
             return WorkflowResult(
                 tenant_id=tenant_id,
                 vertical=vertical,
@@ -40,10 +46,7 @@ def run(vertical: str, tenant_id: str, case_id: str | None, inputs: dict[str, An
         if fresh:
             status = "ready_for_review"
             summary = "Fresh tracking evidence is available for SLA validation."
-            recommendation.update({
-                "eta_status": "fresh_evidence_available",
-                "required_action": "validate_sla",
-            })
+            recommendation.update({"eta_status": "fresh_evidence_available", "required_action": "validate_sla"})
         else:
             status = "needs_human_review"
             summary = "Tracking evidence is stale; the last known ETA must not be presented as confirmed."
@@ -57,7 +60,7 @@ def run(vertical: str, tenant_id: str, case_id: str | None, inputs: dict[str, An
         evidence.append(Evidence(
             source="synthetic_demo_input",
             description=f"Synthetic input for {spec['name']}",
-            observed_at=datetime.now(timezone.utc),
+            observed_at=datetime.now(UTC),
             freshness="fresh",
             attributes={"input_fields": sorted(inputs)},
         ))
