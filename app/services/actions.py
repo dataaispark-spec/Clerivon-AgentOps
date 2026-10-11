@@ -34,8 +34,14 @@ def approve(data):
             raise HTTPException(404, "Proposal not found")
         if item["status"] != "pending_approval":
             raise HTTPException(409, f"Proposal is {item['status']}")
+        if datetime.fromisoformat(item["expires_at"]) <= now_utc():
+            item["status"] = "expired"
+            raise HTTPException(409, "Proposal expired; create a new proposal")
         if data.decision not in {"approve", "reject"}:
             raise HTTPException(422, "decision must be approve or reject")
+
+        # Demo identity only. Production must bind approver_id to verified OIDC claims
+        # and enforce the approver role server-side.
         approval = {
             **data.model_dump(),
             "approval_id": make_id("appr"),
@@ -43,6 +49,7 @@ def approve(data):
         }
         store.approvals[approval["approval_id"]] = approval
         item["status"] = "approved" if data.decision == "approve" else "rejected"
+
     store.event(data.tenant_id, "action.approval_recorded", data.approver_id, {
         "proposal_id": data.proposal_id,
         "decision": data.decision,
@@ -55,6 +62,16 @@ def execute(data):
         item = store.proposals.get(data.proposal_id)
         if not item or not tenant_matches(data.tenant_id, item["tenant_id"]):
             raise HTTPException(404, "Proposal not found")
+        key = (data.tenant_id, data.idempotency_key)
+
+        # Return the exact prior outcome for retries of the same proposal. A key may
+        # never be reused to execute a different proposal in the same tenant.
+        if key in store.executions:
+            prior = store.executions[key]
+            if prior["proposal_id"] != data.proposal_id:
+                raise HTTPException(409, "Idempotency key already used for another proposal")
+            return prior
+
         if item["status"] != "approved":
             raise HTTPException(409, "Action requires an approved proposal")
         if datetime.fromisoformat(item["expires_at"]) <= now_utc():
@@ -67,19 +84,19 @@ def execute(data):
             for a in store.approvals.values()
         ):
             raise HTTPException(403, "Valid approval record not found")
-        key = (data.tenant_id, data.idempotency_key)
-        if key in store.executions:
-            return store.executions[key]
+
         result = {
-            "execution_id": f"exec_{data.idempotency_key}",
+            "execution_id": make_id("exec"),
             "tenant_id": data.tenant_id,
             "proposal_id": data.proposal_id,
             "status": "mock_executed",
             "side_effect": "none; demo adapter only",
+            "idempotency_key": data.idempotency_key,
             "executed_at": now_utc().isoformat(),
         }
         store.executions[key] = result
         item["status"] = "executed"
+
     store.event(data.tenant_id, "action.mock_executed", "system", {
         "proposal_id": data.proposal_id,
         "idempotency_key": data.idempotency_key,

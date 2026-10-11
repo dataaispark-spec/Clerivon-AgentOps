@@ -17,7 +17,9 @@ def verticals():
 
 
 @router.get("/dashboard/summary")
-def dashboard(tenant_id: str = "demo"):
+def dashboard(tenant_id: str = Query(default="demo", min_length=1, max_length=100)):
+    # Tenant ID is caller-supplied in this demo. Production must derive it from the
+    # verified identity token rather than trusting a query parameter.
     with store.lock:
         proposals = [p for p in store.proposals.values() if p["tenant_id"] == tenant_id]
         events = [e for e in store.audit if e["tenant_id"] == tenant_id]
@@ -33,17 +35,20 @@ def dashboard(tenant_id: str = "demo"):
 
 
 @router.get("/logistics/shipments/{shipment_id}/exception")
-def shipment_exception(shipment_id: str, tenant_id: str = "demo"):
-    item = store.shipments.get(shipment_id)
-    if not item or item["tenant_id"] != tenant_id:
-        raise HTTPException(404, "Shipment not found")
-    fresh = is_fresh(item["last_observed_at"], settings.logistics_tracking_max_age_hours)
+def shipment_exception(shipment_id: str, tenant_id: str = Query(default="demo", min_length=1, max_length=100)):
+    with store.lock:
+        item = store.shipments.get(shipment_id)
+        # Copy primitive fields to avoid reading a mutable store object outside lock.
+        if not item or item["tenant_id"] != tenant_id:
+            raise HTTPException(404, "Shipment not found")
+        shipment = dict(item)
+    fresh = is_fresh(shipment["last_observed_at"], settings.logistics_tracking_max_age_hours)
     return {
         "shipment_id": shipment_id,
         "tenant_id": tenant_id,
         "tracking_status": "fresh" if fresh else "stale",
-        "last_observed_at": item["last_observed_at"].isoformat(),
-        "last_known_eta": item["last_known_eta"].isoformat(),
+        "last_observed_at": shipment["last_observed_at"].isoformat(),
+        "last_known_eta": shipment["last_known_eta"].isoformat(),
         "eta_confirmed": fresh,
         "policy_max_age_hours": settings.logistics_tracking_max_age_hours,
         "recommended_next_step": "validate_sla" if fresh else "request_fresh_tracking_and_escalate",
@@ -77,7 +82,11 @@ def execute_approved(request: ExecuteRequest):
 
 
 @router.get("/audit")
-def audit(tenant_id: str = "demo", limit: int = Query(default=100, ge=1, le=500)):
+def audit(
+    tenant_id: str = Query(default="demo", min_length=1, max_length=100),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    # Caller-supplied tenant is only for the demo; production needs auth-derived scope.
     with store.lock:
-        events = [e for e in store.audit if e["tenant_id"] == tenant_id]
+        events = [dict(e) for e in store.audit if e["tenant_id"] == tenant_id]
     return {"tenant_id": tenant_id, "events": events[-limit:]}
